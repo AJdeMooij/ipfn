@@ -186,7 +186,6 @@ class ipfn(object):
         tables = [df]
         for inc in range(steps - 1):
             tables.append(df.copy())
-        original = df.copy()
 
         # Calculate the new weights for each dimension
         inc = 0
@@ -235,7 +234,6 @@ class ipfn(object):
             table_update.reset_index(inplace=True)
             table_current.reset_index(inplace=True)
             inc += 1
-            feat_l = []
 
         # Calculate the max convergence rate
         max_conv = 0
