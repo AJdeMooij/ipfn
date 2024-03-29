@@ -286,3 +286,37 @@ class TestIpfn:
             for feature in features:
                 assert round(df.groupby(vertical)['total'].sum().loc[feature], 2) == round(marginal.loc[feature], 2)
             m_inc += 1
+
+    def test_pandas_3D_with_zeros(self):
+        categories = {
+            "A": [3, 3, 3, 3, 4, 4, 4, 4, 1, 1, 1, 1, 2, 2, 2, 2],
+            "B": [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2],
+            "C": [1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1],
+        }
+        seed_total = [
+            0, 0, 0, 3.,
+            5., 0, 6., 2.,
+            2., 1., 0, 2.,
+            5., 0, 0, 0,
+        ]
+
+        true_total = [
+            0, 0, 0, 3.,
+            6., 0, 3., 3.,
+            2., 10., 0, 7.,
+            9., 0, 0, 0,
+        ]
+
+        df_seed = pd.DataFrame(categories | {'total': seed_total})
+        df_true = pd.DataFrame(categories | {'total': true_total})
+
+        dimensions = [['A'], ['B'], ['C'], ['A', 'B'], ['A', 'C'], ['B', 'C']]
+        aggregates = [df_true.groupby(dimension).sum().total for dimension in dimensions]
+
+        IPF = ipfn.ipfn(df_seed, aggregates, dimensions, convergence_rate=1e-8, rate_tolerance=1e-9)
+
+        df_fitted = IPF.iteration()
+        df_verify = df_fitted.merge(df_true, on=list(categories.keys()))
+
+        # All fitted values should match known margins within convergence rate
+        assert ((df_verify.total_x - df_verify.total_y).abs() < 1e-7).all()
