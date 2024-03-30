@@ -182,20 +182,13 @@ class ipfn(object):
         print(df)
         print(df.groupby('age')['total'].sum(), xip)"""
 
-        steps = len(aggregates)
-        tables = [df]
-        for inc in range(steps - 1):
-            tables.append(df.copy())
-
         # Calculate the new weights for each dimension
         inc = 0
+
+        table_current = df.copy()
+
         for features in dimensions:
-            if inc == (steps - 1):
-                table_update = df
-                table_current = tables[inc].copy()
-            else:
-                table_update = tables[inc + 1]
-                table_current = tables[inc]
+            table_update = table_current.copy()
 
             tmp = table_current.groupby(features)[weight_col].sum()
             xijk = aggregates[inc]
@@ -233,6 +226,9 @@ class ipfn(object):
 
             table_update.reset_index(inplace=True)
             table_current.reset_index(inplace=True)
+
+            table_current = table_update
+
             inc += 1
 
         # Calculate the max convergence rate
